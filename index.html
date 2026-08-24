@@ -6,19 +6,27 @@
 <title>Redfox LR Booking</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f4f6;color:#111}
-header{background:#c00;color:#fff;padding:14px 16px;position:sticky;top:0;z-index:5}
-header h1{margin:0;font-size:20px}header small{opacity:.9}
-.container{max-width:900px;margin:auto;padding:14px}.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0001}
+header{background:#c00;color:#fff;padding:12px 16px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:20px}header small{display:block;opacity:.95;margin-top:3px}
+header a{color:#fff;text-decoration:none;font-weight:bold}
+.container{max-width:980px;margin:auto;padding:14px}.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0001}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 label{font-size:12px;font-weight:bold;display:block;margin-bottom:4px}
-input,select,textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:7px;font-size:14px}
+input,select,textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:7px;font-size:14px;background:#fff}
 textarea{min-height:70px;resize:vertical}.full{grid-column:1/-1}
 h2{font-size:16px;margin:0 0 12px;color:#b00000}
 .row{display:flex;gap:8px;flex-wrap:wrap}.btn{border:0;border-radius:8px;padding:11px 15px;font-weight:bold;cursor:pointer}
-.primary{background:#c00;color:#fff}.secondary{background:#222;color:#fff}.light{background:#eee}
+.primary{background:#c00;color:#fff}.secondary{background:#222;color:#fff}.light{background:#eee}.green{background:#159447;color:#fff}
 .total{font-size:22px;font-weight:bold;text-align:right;padding:10px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.tab{border:0;border-radius:8px;padding:10px 12px;background:#eee;font-weight:bold;cursor:pointer}.tab.active{background:#c00;color:#fff}
+.section{display:none}.section.active{display:block}
+.lr-item{padding:10px;border-bottom:1px solid #ddd}.lr-item:last-child{border-bottom:0}
+.lr-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.small{font-size:12px;color:#555}
+.badge{display:inline-block;padding:3px 7px;border-radius:12px;font-size:11px;font-weight:bold;background:#eee}
+.badge.paid{background:#dff4e5;color:#18763a}.badge.topay{background:#ffe2e2;color:#a00000}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.summary .box{background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:10px;text-align:center}.summary b{display:block;font-size:18px;margin-top:4px}
 #preview{display:none}
-@media(max-width:600px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.summary{grid-template-columns:repeat(2,1fr)}}
 @media print{
 body{background:#fff}.no-print{display:none!important}#preview{display:block}
 .print-sheet{width:100%;border:2px solid #111;padding:8px;font-size:11px}
@@ -32,242 +40,278 @@ table{width:100%;border-collapse:collapse}td,th{border:1px solid #111;padding:6p
 }
 </style>
 </head>
-<body><div id="loginScreen" style="position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">
-  <div style="width:100%;max-width:380px;padding:25px;border-radius:15px;box-shadow:0 4px 20px #ccc">
-    <h2 style="text-align:center;color:#c00">Redfox Login</h2>
+<body>
+<header class="no-print">
+  <h1>Redfox Speed Parcel Service</h1>
+  <small>Contact: <a href="tel:9788823004">97888 23004</a></small>
+</header>
 
-    <input id="loginUser" type="text" placeholder="Username"
-      style="width:100%;padding:14px;margin:8px 0;box-sizing:border-box">
+<div class="container no-print">
+  <div class="tabs">
+    <button class="tab active" onclick="showSection('booking',this)">LR Booking</button>
+    <button class="tab" onclick="showSection('history',this)">LR History</button>
+    <button class="tab" onclick="showSection('search',this)">LR Search & Print</button>
+    <button class="tab" onclick="showSection('destinations',this)">Destination List</button>
+  </div>
 
-    <input id="loginPass" type="password" placeholder="Password"
-      style="width:100%;padding:14px;margin:8px 0;box-sizing:border-box">
+  <div id="booking" class="section active">
+    <div class="card">
+      <h2>New LR Booking</h2>
+      <div class="grid">
+        <div><label>LR No.</label><input id="lr" readonly></div>
+        <div><label>Date</label><input id="date" type="date"></div>
+        <div><label>Invoice No.</label><input id="invoice"></div>
+        <div><label>From</label><input id="from" value="Tirupur"></div>
+        <div><label>To / Destination</label><select id="to"></select></div>
 
-    <button onclick="login()"
-      style="width:100%;padding:14px;background:#c00;color:white;border:0;border-radius:6px">
-      Login
-    </button>
+        <div class="full">
+          <label>Consignor Name & Address</label>
+          <input id="consignor" list="consignorList" placeholder="Type or select saved consignor">
+          <datalist id="consignorList"></datalist>
+        </div>
+        <div class="full">
+          <label>Consignee Name & Address</label>
+          <input id="consignee" list="consigneeList" placeholder="Type or select saved consignee">
+          <datalist id="consigneeList"></datalist>
+        </div>
 
-    <p id="loginError" style="color:red;text-align:center"></p>
+        <div><label>Quantity</label><input id="qty" type="number" min="0" value="1"></div>
+        <div><label>Description of Goods</label><input id="goods"></div>
+        <div><label>Actual Weight (Kg)</label><input id="weight" type="number" min="0" step=".01" oninput="calc()"></div>
+        <div><label>Charged Weight (Kg)</label><input id="charged" type="number" min="0" step=".01" oninput="calc()"></div>
+        <div><label>Rate / Kg ₹</label><input id="rate" type="number" min="0" step=".01" value="0" oninput="calc()"></div>
+        <div><label>Basic Freight ₹ (Auto)</label><input id="freight" type="number" min="0" value="0" readonly></div>
+        <div><label>Loading Charge ₹</label><input id="loading" type="number" min="0" value="0" oninput="calc()"></div>
+        <div><label>Unloading Charge ₹</label><input id="unloading" type="number" min="0" value="0" oninput="calc()"></div>
+        <div><label>Door Collection ₹</label><input id="collection" type="number" min="0" value="0" oninput="calc()"></div>
+        <div><label>Door Delivery ₹</label><input id="delivery" type="number" min="0" value="0" oninput="calc()"></div>
+        <div><label>Goods Value ₹</label><input id="value" type="number" min="0" value="0"></div>
+        <div><label>Type of Delivery</label><select id="dtype"><option>OFFICE</option><option>DOOR</option></select></div>
+        <div><label>Payment</label><select id="payment"><option>PAID</option><option>TO PAY</option></select></div>
+      </div>
+
+      <div class="total">Total ₹ <span id="total">0.00</span></div>
+      <div class="row">
+        <button class="btn primary" onclick="saveLR()">Save LR</button>
+        <button class="btn secondary" onclick="printLR(data())">Print / Save PDF</button>
+        <button class="btn light" onclick="shareWA(data())">WhatsApp</button>
+        <button class="btn light" onclick="newLR()">New</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="history" class="section">
+    <div class="card">
+      <h2>LR History</h2>
+      <div class="summary" id="historySummary"></div>
+      <div style="margin-top:12px"><input id="historyFilter" placeholder="Search LR No., Consignor, Consignee, Destination..." oninput="renderHistory()"></div>
+      <div id="historyList" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div id="search" class="section">
+    <div class="card">
+      <h2>LR Number Search & Print</h2>
+      <div class="row">
+        <input id="searchLR" inputmode="numeric" placeholder="Enter LR Number" style="flex:1">
+        <button class="btn primary" onclick="searchAndShow()">Search</button>
+      </div>
+      <div id="searchResult" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div id="destinations" class="section">
+    <div class="card">
+      <h2>Destination List</h2>
+      <div class="row">
+        <input id="newDestination" placeholder="Add destination" style="flex:1">
+        <button class="btn primary" onclick="addDestination()">Add</button>
+      </div>
+      <div id="destinationList" style="margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<div id="preview">
+  <div class="print-sheet">
+    <div class="phead">
+      <div class="brand"><b>Redfox</b><strong> SPEED PARCEL SERVICE</strong>
+        <small>REGISTER CERTIFIED COMPANY</small>
+        <small>No. 17 KNP PURAM, Lingae Gounder Street, Odakkadu, Tirupur - 641602</small>
+        <small>GSTIN: 33KPDPK1455P1ZG</small>
+        <small>PAN: KPDPK1455P</small>
+        <small>Contact: 97888 23004</small>
+      </div>
+      <div class="meta">
+        <div><b>L.R.No:</b> <span id="p_lr"></span> &nbsp; <b>Date:</b> <span id="p_date"></span></div>
+        <div><b>Invoice No:</b> <span id="p_invoice"></span></div>
+        <div><b>From:</b> <span id="p_from"></span></div>
+        <div><b>To:</b> <span id="p_to"></span></div>
+      </div>
+    </div>
+    <div class="twocol">
+      <div class="box"><b>Consignor's Name & Address:</b><br><span id="p_consignor"></span></div>
+      <div class="box"><b>Consignee's Name & Address:</b><br><span id="p_consignee"></span></div>
+    </div>
+    <table>
+      <tr><th>Qty</th><th>Description of Goods</th><th>Weight Kg</th><th>Rate / Kg</th><th>Freight ₹</th></tr>
+      <tr><td id="p_qty"></td><td id="p_goods"></td><td id="p_weight"></td><td id="p_rate"></td><td id="p_freight"></td></tr>
+      <tr><td colspan="4">Loading Charge</td><td id="p_loading"></td></tr>
+      <tr><td colspan="4">Unloading Charge</td><td id="p_unloading"></td></tr>
+      <tr><td colspan="4">Door Collection / Delivery</td><td id="p_door"></td></tr>
+      <tr><td colspan="4"><b>Goods Value ₹</b></td><td id="p_value"></td></tr>
+      <tr><td colspan="4"><b>TOTAL ₹</b></td><td><b id="p_total"></b></td></tr>
+    </table>
+    <div class="twocol">
+      <div class="box"><b>Type of Delivery:</b> <span id="p_dtype"></span><br><b>Payment:</b> <span id="p_payment"></span><div class="sig"></div>Consignee Signature & Seal</div>
+      <div class="box"><b>For REDFOX SPEED PARCEL SERVICE</b><div class="sig"></div>Authorised Signature</div>
+    </div>
   </div>
 </div>
 
 <script>
-< function login() {
-  const username = document.getElementById("loginUser").value.trim();
-  const password = document.getElementById("loginPass").value;
-
-  if (username === "admin" && password === "1234") {
-    document.getElementById("loginScreen").style.display = "none";
-  } else {
-    document.getElementById("loginError").textContent =
-      "Invalid username or password";
-  }
-}
-    document.getElementById("loginScreen").style.display = "none";
-  } else {
-    document.getElementById("loginError").textContent =
-      "Invalid username or password";
-  }
-}function login() {
-  const username = document.getElementById("redfox").value;
-  const password = document.getElementById("sankar345").value;
-
-  if (username === "admin" && password === "1234") {
-    document.getElementById("loginScreen").style.display = "none";
-  } else {
-    document.getElementById("loginError").textContent =
-      "Invalid username or password";
-  }
-}
-</script>
-<header class="no-print"><h1>Redfox Speed Parcel Service</h1><small>No. 17 KNP PURAM, Lingae Goundr Street, Odakkadu, Tirupur - 641602</small><small>GSTIN: 33KPDPK1455P1ZG | PAN: KPDPK1455P</small></header>
-
-<div class="container no-print">
-<div class="card">
-<h2>New LR Booking</h2>
-<div class="grid">
-<div><label>LR No.</label><input id="lr" readonly></div>
-<div><label>Date</label><input id="date" type="date"></div>
-<div><label>Invoice No.</label><input id="invoice"></div>
-<div><label>From</label><input id="from" value="Tirupur"></div>
-<div><label>To</label>
-<select id="to">
-<option value="">Select Destination</option>
-<option>Erode</option>
-<option>Salem</option>
-<option>Dharmapuri</option>
-<option>Krishnagiri</option>
-<option>Bargur</option>
-<option>Vaniyambadi</option>
-<option>Ambur</option>
-<option>Vellore</option>
-<option>Ranipet</option>
-<option>Kanchipuram</option>
-<option>Tiruvallur</option>
-<option>Avadi</option>
-<option>Ambattur</option>
-<option>Koyambedu</option>
-<option>Madhavaram</option>
-<option>Chennai</option>
-</select></div>
-<div class="full"><label>Consignor Name & Address</label><textarea id="consignor"></textarea></div>
-<div class="full"><label>Consignee Name & Address</label><textarea id="consignee"></textarea></div>
-<div><label>Quantity</label><input id="qty" type="number" min="0" value="1"></div>
-<div><label>Description of Goods</label><input id="goods"></div>
-<div><label>Actual Weight (Kg)</label><input id="weight" type="number" min="0" step=".01"></div>
-<div><label>Charged Weight (Kg)</label><input id="charged" type="number" min="0" step=".01"></div>
-<div><label>Basic Freight ₹</label><input id="freight" type="number" min="0" value="0" oninput="calc()"></div>
-<div><label>Loading Charge ₹</label><input id="loading" type="number" min="0" value="0" oninput="calc()"></div>
-<div><label>Unloading Charge ₹</label><input id="unloading" type="number" min="0" value="0" oninput="calc()"></div>
-<div><label>Door Collection ₹</label><input id="collection" type="number" min="0" value="0" oninput="calc()"></div>
-<div><label>Door Delivery ₹</label><input id="delivery" type="number" min="0" value="0" oninput="calc()"></div>
-<div><label>Goods Value ₹</label><input id="value" type="number" min="0" value="0"></div>
-<div><label>Type of Delivery</label><select id="dtype"><option>OFFICE</option><option>DOOR</option></select></div>
-<div><label>Payment</label><select id="payment"><option>PAID</option><option>TO PAY</option></select></div>
-</div>
-<div class="total">Total ₹ <span id="total">0</span></div>
-<div class="row">
-<button class="btn primary" onclick="saveLR()">Save LR</button>
-<button class="btn secondary" onclick="printLR()">Print / Save PDF</button>
-<button class="btn light" onclick="shareWA()">WhatsApp</button>
-<button class="btn light" onclick="newLR()">New</button>
-</div>
-</div>
-<div class="card">
-<h2>LR Booking History</h2>
-<div class="row" style="margin-bottom:10px">
-<input id="historySearch" placeholder="Enter LR Number" oninput="renderList()" style="flex:1;min-width:220px">
-<button class="btn light" onclick="exportHistory()">Export History</button>
-<button class="btn light" onclick="clearHistory()">Clear All</button>
-</div>
-<div id="historyCount" style="font-size:12px;color:#666;margin-bottom:8px"></div>
-<div id="list">No saved LRs.</div>
-</div>
-</div>
-
-<div id="preview">
-<div class="print-sheet">
-<div class="phead">
-<div class="brand"><b>Redfox</b><strong> SPEED PARCEL SERVICE</strong>
-<small>REGISTER CERTIFIED COMPANY</small>
-<small>No. 17 KNP PURAM, Lingae Gounder Street, Odakkadu</small>
-<small>Tirupur - 641602</small>
-<small>GSTIN: 33KPDPK1455P1ZG</small>
-<small>contact 9788823004</small></div>
-<div class="meta"><div><b>L.R.No:</b> <span id="p_lr"></span> &nbsp; <b>Date:</b> <span id="p_date"></span></div><div><b>Invoice No:</b> <span id="p_invoice"></span></div><div><b>From:</b> <span id="p_from"></span></div><div><b>To:</b> <span id="p_to"></span></div></div>
-</div>
-<div class="twocol"><div class="box"><b>Consignor's Name & Address:</b><br><span id="p_consignor"></span></div><div class="box"><b>Consignee's Name & Address:</b><br><span id="p_consignee"></span></div></div>
-<table>
-<tr><th>Qty</th><th>Description of Goods (Said to Contain)</th><th>Weight Kg</th><th>Rate / Kg</th><th>Freight ₹</th></tr>
-<tr><td id="p_qty"></td><td id="p_goods"></td><td id="p_weight"></td><td></td><td id="p_freight"></td></tr>
-<tr><td colspan="4">Loading Charge</td><td id="p_loading"></td></tr>
-<tr><td colspan="4">Unloading Charge</td><td id="p_unloading"></td></tr>
-<tr><td colspan="4">Door Collection / Delivery</td><td id="p_door"></td></tr>
-<tr><td colspan="4"><b>Goods Value ₹</b></td><td id="p_value"></td></tr>
-<tr><td colspan="4"><b>TOTAL ₹</b></td><td><b id="p_total"></b></td></tr>
-</table>
-<div class="twocol"><div class="box"><b>Type of Delivery:</b> <span id="p_dtype"></span><br><b>Payment:</b> <span id="p_payment"></span><div class="sig"></div>Consignee Signature & Seal</div><div class="box"><b>For REDFOX SPEED PARCEL SERVICE</b><div class="sig"></div>Authorised Signature</div></div>
-</div>
-</div>
-
-<script>
 const $=id=>document.getElementById(id);
-function init(){
- let n=Number(localStorage.getItem('redfox_lr_no')||2036);
- $('lr').value=n+1;
- $('date').value=new Date().toISOString().slice(0,10);
- renderList(); calc();
+const DEFAULT_DESTINATIONS=["Chennai","Coimbatore","Ambar","Madurai","Erode","Bengaluru","Salem","Tiruchirappalli"];
+
+function getJSON(key,fallback){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch(e){return fallback;}}
+function setJSON(key,value){localStorage.setItem(key,JSON.stringify(value));}
+
+function showSection(id,btn){
+  document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  $(id).classList.add('active'); if(btn)btn.classList.add('active');
+  if(id==='history')renderHistory();
+  if(id==='destinations')renderDestinations();
 }
+
+function destinations(){
+  let a=getJSON('redfox_destinations',[]);
+  if(!a.length){a=DEFAULT_DESTINATIONS.slice();setJSON('redfox_destinations',a);}
+  return a;
+}
+function renderDestinations(){
+  const a=destinations();
+  $('destinationList').innerHTML=a.map((d,i)=>`<div class="lr-item"><b>${escapeHTML(d)}</b>
+    <button class="btn light" style="float:right;padding:5px 9px" onclick="deleteDestination(${i})">Delete</button></div>`).join('');
+  $('to').innerHTML='<option value="">Select Destination</option>'+a.map(d=>`<option>${escapeHTML(d)}</option>`).join('');
+}
+function addDestination(){
+  const v=$('newDestination').value.trim();if(!v)return;
+  let a=destinations();if(!a.some(x=>x.toLowerCase()===v.toLowerCase()))a.push(v);
+  setJSON('redfox_destinations',a);$('newDestination').value='';renderDestinations();
+}
+function deleteDestination(i){
+  const a=destinations();a.splice(i,1);setJSON('redfox_destinations',a);renderDestinations();
+}
+
+function saveParty(type,value){
+  value=(value||'').trim();if(!value)return;
+  const key=type==='consignor'?'redfox_consignors':'redfox_consignees';
+  let a=getJSON(key,[]);
+  if(!a.includes(value)){a.unshift(value);if(a.length>200)a=a.slice(0,200);setJSON(key,a);}
+  renderParties();
+}
+function renderParties(){
+  [['consignor','redfox_consignors','consignorList'],['consignee','redfox_consignees','consigneeList']].forEach(([t,k,l])=>{
+    const a=getJSON(k,[]);$(l).innerHTML=a.map(v=>`<option value="${escapeAttr(v)}"></option>`).join('');
+  });
+}
+function attachPartyAutosave(){
+  ['consignor','consignee'].forEach(t=>{
+    const el=$(t);el.addEventListener('blur',()=>saveParty(t,el.value));el.addEventListener('change',()=>saveParty(t,el.value));
+  });renderParties();
+}
+
 function calc(){
- const ids=['freight','loading','unloading','collection','delivery'];
- const t=ids.reduce((s,id)=>s+(Number($(id).value)||0),0);
- $('total').textContent=t.toFixed(2);
+  const charged=Number($('charged').value)||Number($('weight').value)||0;
+  const rate=Number($('rate').value)||0;
+  const freight=charged*rate;
+  $('freight').value=freight.toFixed(2);
+  const t=freight+(Number($('loading').value)||0)+(Number($('unloading').value)||0)+(Number($('collection').value)||0)+(Number($('delivery').value)||0);
+  $('total').textContent=t.toFixed(2);
 }
 function data(){
- return {lr:$('lr').value,date:$('date').value,invoice:$('invoice').value,from:$('from').value,to:$('to').value,
-consignor:$('consignor').value,consignee:$('consignee').value,qty:$('qty').value,goods:$('goods').value,
-weight:$('weight').value,charged:$('charged').value,freight:$('freight').value,loading:$('loading').value,
-unloading:$('unloading').value,collection:$('collection').value,delivery:$('delivery').value,value:$('value').value,
-dtype:$('dtype').value,payment:$('payment').value,total:$('total').textContent};
+  return {
+    lr:$('lr').value,date:$('date').value,invoice:$('invoice').value,from:$('from').value,to:$('to').value,
+    consignor:$('consignor').value,consignee:$('consignee').value,qty:$('qty').value,goods:$('goods').value,
+    weight:$('weight').value,charged:$('charged').value,rate:$('rate').value,freight:$('freight').value,
+    loading:$('loading').value,unloading:$('unloading').value,collection:$('collection').value,delivery:$('delivery').value,
+    value:$('value').value,dtype:$('dtype').value,payment:$('payment').value,total:$('total').textContent
+  };
 }
 function saveLR(){
- const d=data();
- let a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
- const existing=a.findIndex(x=>String(x.lr)===String(d.lr));
- if(existing>=0){a[existing]=d}else{a.unshift(d)}
- localStorage.setItem('redfox_lrs',JSON.stringify(a));
- localStorage.setItem('redfox_lr_no',d.lr);
- renderList();
- alert('LR '+d.lr+' saved to Booking History');
+  const d=data();
+  if(!d.to){alert('Please select destination');return;}
+  if(!d.consignor||!d.consignee){alert('Please enter consignor and consignee');return;}
+  saveParty('consignor',d.consignor);saveParty('consignee',d.consignee);
+  let a=getJSON('redfox_lrs',[]);
+  const existing=a.findIndex(x=>String(x.lr)===String(d.lr));
+  if(existing>=0)a[existing]=d;else a.unshift(d);
+  setJSON('redfox_lrs',a);localStorage.setItem('redfox_lr_no',d.lr);
+  alert('LR '+d.lr+' saved successfully');renderHistory();
 }
-function renderList(){
- const a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
- const q=(($('historySearch')||{}).value||'').toLowerCase().trim();
- const filtered=a.filter(x=>{
-   if(!q) return true;
-   return String(x.lr||'').toLowerCase().includes(q) ||
-          [x.date,x.invoice,x.from,x.to,x.consignor,x.consignee,x.goods,x.payment]
-          .join(' ').toLowerCase().includes(q);
- });
- $('historyCount').textContent=`${filtered.length} booking(s) shown • ${a.length} saved`;
- $('list').innerHTML=filtered.length ? filtered.map(x=>`
- <div style="padding:10px;border-bottom:1px solid #ddd">
-   <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
-     <div><b>LR ${x.lr}</b> — ${x.date||''}</div>
-     <div><b>₹${x.total||0}</b> — ${x.payment||''}</div>
-   </div>
-   <div style="font-size:13px;margin-top:4px">${x.from||''} → ${x.to||''}</div>
-   <div style="font-size:12px;color:#666">${x.consignor||''} → ${x.consignee||''}</div>
-   <div class="row" style="margin-top:7px">
-     <button class="btn light" onclick="loadHistory('${String(x.lr).replace(/'/g,"\\'")}')">Open</button>
-     <button class="btn secondary" onclick="printHistory('${String(x.lr).replace(/'/g,"\\'")}')">Print</button>
-     <button class="btn light" onclick="deleteHistory('${String(x.lr).replace(/'/g,"\\'")}')">Delete</button>
-   </div>
- </div>`).join(''):'No matching LRs.';
+function renderHistory(){
+  const all=getJSON('redfox_lrs',[]);
+  const q=($('historyFilter')?.value||'').toLowerCase().trim();
+  const a=all.filter(x=>Object.values(x).join(' ').toLowerCase().includes(q));
+  const paid=all.filter(x=>x.payment==='PAID').reduce((s,x)=>s+Number(x.total||0),0);
+  const topay=all.filter(x=>x.payment==='TO PAY').reduce((s,x)=>s+Number(x.total||0),0);
+  $('historySummary').innerHTML=`<div class="box">Total LRs<b>${all.length}</b></div><div class="box">Total Amount<b>₹${(paid+topay).toFixed(2)}</b></div><div class="box">Paid<b>₹${paid.toFixed(2)}</b></div><div class="box">To Pay<b>₹${topay.toFixed(2)}</b></div>`;
+  $('historyList').innerHTML=a.length?a.map(x=>`<div class="lr-item">
+    <b>LR ${escapeHTML(x.lr)}</b> — ${escapeHTML(x.from)} → ${escapeHTML(x.to)} — ₹${escapeHTML(x.total)}
+    <div class="small">${escapeHTML(x.date)} · ${escapeHTML(x.consignor)} → ${escapeHTML(x.consignee)}
+      <span class="badge ${x.payment==='PAID'?'paid':'topay'}">${escapeHTML(x.payment)}</span></div>
+    <div class="lr-actions">
+      <button class="btn light" onclick="loadLR('${escapeAttr(x.lr)}')">Edit / Load</button>
+      <button class="btn secondary" onclick="printSaved('${escapeAttr(x.lr)}')">Print</button>
+      <button class="btn light" onclick="shareWA(findLR('${escapeAttr(x.lr)}'))">WhatsApp</button>
+      <button class="btn light" onclick="deleteLR('${escapeAttr(x.lr)}')">Delete</button>
+    </div></div>`).join(''):'No matching LRs.';
 }
-function loadHistory(lr){
- const a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
- const d=a.find(x=>String(x.lr)===String(lr)); if(!d)return;
- Object.keys(d).forEach(k=>{if($(k))$(k).value=d[k]});
- calc(); window.scrollTo({top:0,behavior:'smooth'});
+function findLR(lr){return getJSON('redfox_lrs',[]).find(x=>String(x.lr)===String(lr));}
+function loadLR(lr){
+  const d=findLR(lr);if(!d)return;
+  ['lr','date','invoice','from','to','consignor','consignee','qty','goods','weight','charged','rate','freight','loading','unloading','collection','delivery','value','dtype','payment'].forEach(k=>{if($(k)&&d[k]!==undefined)$(k).value=d[k];});
+  calc();showSection('booking',document.querySelector('.tab'));
+  window.scrollTo({top:0,behavior:'smooth'});
 }
-function printHistory(lr){
- const a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
- const d=a.find(x=>String(x.lr)===String(lr)); if(!d)return;
- fillPreview(d);
- window.print();
+function deleteLR(lr){
+  if(!confirm('Delete LR '+lr+'?'))return;
+  setJSON('redfox_lrs',getJSON('redfox_lrs',[]).filter(x=>String(x.lr)!==String(lr)));renderHistory();
 }
-function deleteHistory(lr){
- if(!confirm('Delete LR '+lr+' from history?'))return;
- let a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
- a=a.filter(x=>String(x.lr)!==String(lr));
- localStorage.setItem('redfox_lrs',JSON.stringify(a)); renderList();
+function searchAndShow(){
+  const q=$('searchLR').value.trim();const d=findLR(q);
+  $('searchResult').innerHTML=d?`<div class="card" style="margin:0"><b>LR ${escapeHTML(d.lr)}</b> — ${escapeHTML(d.from)} → ${escapeHTML(d.to)}<br>
+  Date: ${escapeHTML(d.date)}<br>Consignor: ${escapeHTML(d.consignor)}<br>Consignee: ${escapeHTML(d.consignee)}<br>
+  Total: ₹${escapeHTML(d.total)} · ${escapeHTML(d.payment)}
+  <div class="row" style="margin-top:10px"><button class="btn primary" onclick="printSaved('${escapeAttr(d.lr)}')">Print / Save PDF</button><button class="btn light" onclick="loadLR('${escapeAttr(d.lr)}')">Edit / Load</button></div></div>`:'<div class="small">LR not found.</div>';
 }
-function clearHistory(){
- if(!confirm('Delete all saved LR history?'))return;
- localStorage.removeItem('redfox_lrs'); renderList();
-}
-function exportHistory(){
- const a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
- const blob=new Blob([JSON.stringify(a,null,2)],{type:'application/json'});
- const url=URL.createObjectURL(blob); const el=document.createElement('a');
- el.href=url; el.download='redfox_lr_history.json'; el.click(); URL.revokeObjectURL(url);
-}
+function printSaved(lr){const d=findLR(lr);if(d)printLR(d);}
 function fillPreview(d){
- Object.keys(d).forEach(k=>{const e=$('p_'+k);if(e)e.textContent=d[k]});
- $('p_door').textContent=(Number(d.collection)||0)+(Number(d.delivery)||0);
+  Object.keys(d).forEach(k=>{const e=$('p_'+k);if(e)e.textContent=d[k]});
+  $('p_door').textContent=((Number(d.collection)||0)+(Number(d.delivery)||0)).toFixed(2);
 }
-function printLR(){fillPreview(data());window.print()}
-function shareWA(){
- const d=data(); const text=`Redfox LR ${d.lr}\\nDate: ${d.date}\\nFrom: ${d.from}\\nTo: ${d.to}\\nConsignor: ${d.consignor}\\nConsignee: ${d.consignee}\\nGoods: ${d.goods}\\nQty: ${d.qty}\\nWeight: ${d.weight} Kg\\nTotal: ₹${d.total}\\nPayment: ${d.payment}`;
- location.href='https://wa.me/?text='+encodeURIComponent(text);
+function printLR(d){fillPreview(d);window.print();}
+function shareWA(d){
+  if(!d)return;
+  const text=`Redfox LR ${d.lr}\nDate: ${d.date}\nFrom: ${d.from}\nTo: ${d.to}\nConsignor: ${d.consignor}\nConsignee: ${d.consignee}\nGoods: ${d.goods}\nQty: ${d.qty}\nWeight: ${d.weight} Kg\nTotal: ₹${d.total}\nPayment: ${d.payment}`;
+  location.href='https://wa.me/?text='+encodeURIComponent(text);
 }
 function newLR(){
- const a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
- const max=a.reduce((m,x)=>Math.max(m,Number(x.lr)||0),Number(localStorage.getItem('redfox_lr_no')||2036));
- const n=max+1; $('lr').value=n;
- ['invoice','to','consignor','consignee','goods','weight','charged'].forEach(x=>$(x).value='');
- ['freight','loading','unloading','collection','delivery','value'].forEach(x=>$(x).value=0); calc();
+  const n=Number(localStorage.getItem('redfox_lr_no')||2036)+1;$('lr').value=n;
+  $('date').value=new Date().toISOString().slice(0,10);
+  ['invoice','to','consignor','consignee','goods','weight','charged'].forEach(x=>$(x).value='');
+  $('qty').value=1;$('rate').value=0;
+  ['freight','loading','unloading','collection','delivery','value'].forEach(x=>$(x).value=0);
+  $('dtype').value='OFFICE';$('payment').value='PAID';calc();
+}
+function escapeHTML(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function escapeAttr(v){return escapeHTML(v).replace(/`/g,'&#96;');}
+
+function init(){
+  const n=Number(localStorage.getItem('redfox_lr_no')||2036);
+  $('lr').value=n+1;$('date').value=new Date().toISOString().slice(0,10);
+  renderDestinations();renderHistory();attachPartyAutosave();calc();
 }
 init();
 </script>
