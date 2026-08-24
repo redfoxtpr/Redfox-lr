@@ -33,7 +33,7 @@ table{width:100%;border-collapse:collapse}td,th{border:1px solid #111;padding:6p
 </style>
 </head>
 <body>
-<header class="no-print"><h1>Redfox Speed Parcel Service</h1><small>LR Booking Prototype</small></header>
+<header class="no-print"><h1>Redfox Speed Parcel Service</h1><small>No. 17 KNP PURAM, Lingae Gounder Street, Odakkadu, Tirupur - 641602</small><small>GSTIN: 33KPDPK1455P1ZG | PAN: KPDPK1455P</small></header>
 
 <div class="container no-print">
 <div class="card">
@@ -43,9 +43,28 @@ table{width:100%;border-collapse:collapse}td,th{border:1px solid #111;padding:6p
 <div><label>Date</label><input id="date" type="date"></div>
 <div><label>Invoice No.</label><input id="invoice"></div>
 <div><label>From</label><input id="from" value="Tirupur"></div>
-<div><label>To</label><input id="to"></div>
-<div class="full"><label>Consignor Name & Address</label><input id="consignor" list="consignorList" placeholder="Type or select saved consignor"><datalist id="consignorList"></datalist></div>
-<div class="full"><label>Consignee Name & Address</label><input id="consignee" list="consigneeList" placeholder="Type or select saved consignee"><datalist id="consigneeList"></datalist></div>
+<div><label>To</label>
+<select id="to">
+<option value="">Select Destination</option>
+<option>Erode</option>
+<option>Salem</option>
+<option>Dharmapuri</option>
+<option>Krishnagiri</option>
+<option>Bargur</option>
+<option>Vaniyambadi</option>
+<option>Ambur</option>
+<option>Vellore</option>
+<option>Ranipet</option>
+<option>Kanchipuram</option>
+<option>Tiruvallur</option>
+<option>Avadi</option>
+<option>Ambattur</option>
+<option>Koyambedu</option>
+<option>Madhavaram</option>
+<option>Chennai</option>
+</select></div>
+<div class="full"><label>Consignor Name & Address</label><textarea id="consignor"></textarea></div>
+<div class="full"><label>Consignee Name & Address</label><textarea id="consignee"></textarea></div>
 <div><label>Quantity</label><input id="qty" type="number" min="0" value="1"></div>
 <div><label>Description of Goods</label><input id="goods"></div>
 <div><label>Actual Weight (Kg)</label><input id="weight" type="number" min="0" step=".01"></div>
@@ -68,14 +87,26 @@ table{width:100%;border-collapse:collapse}td,th{border:1px solid #111;padding:6p
 </div>
 </div>
 <div class="card">
-<h2>Saved LRs</h2><div id="list">No saved LRs.</div>
+<h2>LR Booking History</h2>
+<div class="row" style="margin-bottom:10px">
+<input id="historySearch" placeholder="Enter LR Number" oninput="renderList()" style="flex:1;min-width:220px">
+<button class="btn light" onclick="exportHistory()">Export History</button>
+<button class="btn light" onclick="clearHistory()">Clear All</button>
+</div>
+<div id="historyCount" style="font-size:12px;color:#666;margin-bottom:8px"></div>
+<div id="list">No saved LRs.</div>
 </div>
 </div>
 
 <div id="preview">
 <div class="print-sheet">
 <div class="phead">
-<div class="brand"><b>Redfox</b><strong> SPEED PARCEL SERVICE</strong><small>REGISTER CERTIFIED COMPANY</small><small>56, Stanes Road, Near Pushpa Theatre Bus Stop, Tirupur - 641 602</small><small>GSTIN: 33KPDPK1455P1ZG</small></div>
+<div class="brand"><b>Redfox</b><strong> SPEED PARCEL SERVICE</strong>
+<small>REGISTER CERTIFIED COMPANY</small>
+<small>No. 17 KNP PURAM, Lingae Gounder Street, Odakkadu</small>
+<small>Tirupur - 641602</small>
+<small>GSTIN: 33KPDPK1455P1ZG</small>
+<small>PAN: KPDPK1455P</small></div>
 <div class="meta"><div><b>L.R.No:</b> <span id="p_lr"></span> &nbsp; <b>Date:</b> <span id="p_date"></span></div><div><b>Invoice No:</b> <span id="p_invoice"></span></div><div><b>From:</b> <span id="p_from"></span></div><div><b>To:</b> <span id="p_to"></span></div></div>
 </div>
 <div class="twocol"><div class="box"><b>Consignor's Name & Address:</b><br><span id="p_consignor"></span></div><div class="box"><b>Consignee's Name & Address:</b><br><span id="p_consignee"></span></div></div>
@@ -94,30 +125,11 @@ table{width:100%;border-collapse:collapse}td,th{border:1px solid #111;padding:6p
 
 <script>
 const $=id=>document.getElementById(id);
-function saveParty(type,value){
- value=(value||'').trim(); if(!value)return;
- const key=type==='consignor'?'redfox_consignors':'redfox_consignees';
- let a=JSON.parse(localStorage.getItem(key)||'[]');
- if(!a.includes(value)){a.unshift(value);if(a.length>200)a=a.slice(0,200);localStorage.setItem(key,JSON.stringify(a));}
- renderParties();
-}
-function renderParties(){
- [['consignor','redfox_consignors','consignorList'],['consignee','redfox_consignees','consigneeList']].forEach(([t,k,l])=>{
-  const a=JSON.parse(localStorage.getItem(k)||'[]');
-  const el=$(l); if(el) el.innerHTML=a.map(v=>`<option value="${String(v).replace(/"/g,'&quot;')}"></option>`).join('');
- });
-}
-function attachPartyAutosave(){
- ['consignor','consignee'].forEach(t=>{
-  const el=$(t); if(el){el.addEventListener('blur',()=>saveParty(t,el.value));el.addEventListener('change',()=>saveParty(t,el.value));}
- });
- renderParties();
-}
 function init(){
  let n=Number(localStorage.getItem('redfox_lr_no')||2036);
  $('lr').value=n+1;
  $('date').value=new Date().toISOString().slice(0,10);
- renderList(); calc(); attachPartyAutosave();
+ renderList(); calc();
 }
 function calc(){
  const ids=['freight','loading','unloading','collection','delivery'];
@@ -132,12 +144,67 @@ unloading:$('unloading').value,collection:$('collection').value,delivery:$('deli
 dtype:$('dtype').value,payment:$('payment').value,total:$('total').textContent};
 }
 function saveLR(){
- const d=data(); let a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]'); a.unshift(d); localStorage.setItem('redfox_lrs',JSON.stringify(a));
- localStorage.setItem('redfox_lr_no',d.lr); alert('LR '+d.lr+' saved'); renderList();
+ const d=data();
+ let a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
+ const existing=a.findIndex(x=>String(x.lr)===String(d.lr));
+ if(existing>=0){a[existing]=d}else{a.unshift(d)}
+ localStorage.setItem('redfox_lrs',JSON.stringify(a));
+ localStorage.setItem('redfox_lr_no',d.lr);
+ renderList();
+ alert('LR '+d.lr+' saved to Booking History');
 }
 function renderList(){
  const a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
- $('list').innerHTML=a.length?a.slice(0,20).map(x=>`<div style="padding:8px;border-bottom:1px solid #ddd"><b>LR ${x.lr}</b> — ${x.from} → ${x.to} — ₹${x.total}</div>`).join(''):'No saved LRs.';
+ const q=(($('historySearch')||{}).value||'').toLowerCase().trim();
+ const filtered=a.filter(x=>{
+   if(!q) return true;
+   return String(x.lr||'').toLowerCase().includes(q) ||
+          [x.date,x.invoice,x.from,x.to,x.consignor,x.consignee,x.goods,x.payment]
+          .join(' ').toLowerCase().includes(q);
+ });
+ $('historyCount').textContent=`${filtered.length} booking(s) shown • ${a.length} saved`;
+ $('list').innerHTML=filtered.length ? filtered.map(x=>`
+ <div style="padding:10px;border-bottom:1px solid #ddd">
+   <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+     <div><b>LR ${x.lr}</b> — ${x.date||''}</div>
+     <div><b>₹${x.total||0}</b> — ${x.payment||''}</div>
+   </div>
+   <div style="font-size:13px;margin-top:4px">${x.from||''} → ${x.to||''}</div>
+   <div style="font-size:12px;color:#666">${x.consignor||''} → ${x.consignee||''}</div>
+   <div class="row" style="margin-top:7px">
+     <button class="btn light" onclick="loadHistory('${String(x.lr).replace(/'/g,"\\'")}')">Open</button>
+     <button class="btn secondary" onclick="printHistory('${String(x.lr).replace(/'/g,"\\'")}')">Print</button>
+     <button class="btn light" onclick="deleteHistory('${String(x.lr).replace(/'/g,"\\'")}')">Delete</button>
+   </div>
+ </div>`).join(''):'No matching LRs.';
+}
+function loadHistory(lr){
+ const a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
+ const d=a.find(x=>String(x.lr)===String(lr)); if(!d)return;
+ Object.keys(d).forEach(k=>{if($(k))$(k).value=d[k]});
+ calc(); window.scrollTo({top:0,behavior:'smooth'});
+}
+function printHistory(lr){
+ const a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
+ const d=a.find(x=>String(x.lr)===String(lr)); if(!d)return;
+ fillPreview(d);
+ window.print();
+}
+function deleteHistory(lr){
+ if(!confirm('Delete LR '+lr+' from history?'))return;
+ let a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
+ a=a.filter(x=>String(x.lr)!==String(lr));
+ localStorage.setItem('redfox_lrs',JSON.stringify(a)); renderList();
+}
+function clearHistory(){
+ if(!confirm('Delete all saved LR history?'))return;
+ localStorage.removeItem('redfox_lrs'); renderList();
+}
+function exportHistory(){
+ const a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
+ const blob=new Blob([JSON.stringify(a,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob); const el=document.createElement('a');
+ el.href=url; el.download='redfox_lr_history.json'; el.click(); URL.revokeObjectURL(url);
 }
 function fillPreview(d){
  Object.keys(d).forEach(k=>{const e=$('p_'+k);if(e)e.textContent=d[k]});
@@ -149,7 +216,9 @@ function shareWA(){
  location.href='https://wa.me/?text='+encodeURIComponent(text);
 }
 function newLR(){
- const n=Number(localStorage.getItem('redfox_lr_no')||2036)+1; $('lr').value=n;
+ const a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
+ const max=a.reduce((m,x)=>Math.max(m,Number(x.lr)||0),Number(localStorage.getItem('redfox_lr_no')||2036));
+ const n=max+1; $('lr').value=n;
  ['invoice','to','consignor','consignee','goods','weight','charged'].forEach(x=>$(x).value='');
  ['freight','loading','unloading','collection','delivery','value'].forEach(x=>$(x).value=0); calc();
 }
