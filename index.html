@@ -32,7 +32,48 @@ table{width:100%;border-collapse:collapse}td,th{border:1px solid #111;padding:6p
 }
 </style>
 </head>
-<body>
+<body><div id="loginScreen" style="position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="width:100%;max-width:380px;padding:25px;border-radius:15px;box-shadow:0 4px 20px #ccc">
+    <h2 style="text-align:center;color:#c00">Redfox Login</h2>
+
+    <input id="loginUser" type="text" placeholder="Username"
+      style="width:100%;padding:14px;margin:8px 0;box-sizing:border-box">
+
+    <input id="loginPass" type="password" placeholder="Password"
+      style="width:100%;padding:14px;margin:8px 0;box-sizing:border-box">
+
+    <button onclick="login()"
+      style="width:100%;padding:14px;background:#c00;color:white;border:0;border-radius:6px">
+      Login
+    </button>
+
+    <p id="loginError" style="color:red;text-align:center"></p>
+  </div>
+</div>
+
+<script>
+function login() {
+  const username = document.getElementById("loginUser").value.trim();
+  const password = document.getElementById("loginPass").value;
+
+  if (username === "admin" && password === "1234") {
+    document.getElementById("loginScreen").style.display = "none";
+  } else {
+    document.getElementById("loginError").textContent =
+      "Invalid username or password";
+  }
+}function login() {
+  const username = document.getElementById("redfox").value;
+  const password = document.getElementById("sankar345").value;
+
+  if (username === "admin" && password === "1234") {
+    document.getElementById("loginScreen").style.display = "none";
+  } else {
+    document.getElementById("loginError").textContent =
+      "Invalid username or password";
+  }
+}
+</script>
 <header class="no-print"><h1>Redfox Speed Parcel Service</h1><small>No. 17 KNP PURAM, Lingae Gounder Street, Odakkadu, Tirupur - 641602</small><small>GSTIN: 33KPDPK1455P1ZG | PAN: KPDPK1455P</small></header>
 
 <div class="container no-print">
