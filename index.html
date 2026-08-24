@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ta">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Redfox LR Booking</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f4f6;color:#111}
+header{background:#c00;color:#fff;padding:14px 16px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:20px}header small{opacity:.9}
+.container{max-width:900px;margin:auto;padding:14px}.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0001}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+label{font-size:12px;font-weight:bold;display:block;margin-bottom:4px}
+input,select,textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:7px;font-size:14px}
+textarea{min-height:70px;resize:vertical}.full{grid-column:1/-1}
+h2{font-size:16px;margin:0 0 12px;color:#b00000}
+.row{display:flex;gap:8px;flex-wrap:wrap}.btn{border:0;border-radius:8px;padding:11px 15px;font-weight:bold;cursor:pointer}
+.primary{background:#c00;color:#fff}.secondary{background:#222;color:#fff}.light{background:#eee}
+.total{font-size:22px;font-weight:bold;text-align:right;padding:10px}
+#preview{display:none}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+@media print{
+body{background:#fff}.no-print{display:none!important}#preview{display:block}
+.print-sheet{width:100%;border:2px solid #111;padding:8px;font-size:11px}
+.phead{display:grid;grid-template-columns:1.4fr 1fr;border-bottom:1px solid #111}
+.brand{padding:8px}.brand b{font-size:25px;color:#d00000}.brand small{display:block}
+.meta{border-left:1px solid #111}.meta div{padding:6px;border-bottom:1px solid #111}
+.twocol{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #111}
+.box{padding:7px;border-right:1px solid #111;min-height:80px}.box:last-child{border-right:0}
+table{width:100%;border-collapse:collapse}td,th{border:1px solid #111;padding:6px;text-align:left}
+.sig{height:75px}.foot{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #111}
+}
+</style>
+</head>
+<body>
+<header class="no-print"><h1>Redfox Speed Parcel Service</h1><small>LR Booking Prototype</small></header>
+
+<div class="container no-print">
+<div class="card">
+<h2>New LR Booking</h2>
+<div class="grid">
+<div><label>LR No.</label><input id="lr" readonly></div>
+<div><label>Date</label><input id="date" type="date"></div>
+<div><label>Invoice No.</label><input id="invoice"></div>
+<div><label>From</label><input id="from" value="Tirupur"></div>
+<div><label>To</label><input id="to"></div>
+<div class="full"><label>Consignor Name & Address</label><input id="consignor" list="consignorList" placeholder="Type or select saved consignor"><datalist id="consignorList"></datalist></div>
+<div class="full"><label>Consignee Name & Address</label><input id="consignee" list="consigneeList" placeholder="Type or select saved consignee"><datalist id="consigneeList"></datalist></div>
+<div><label>Quantity</label><input id="qty" type="number" min="0" value="1"></div>
+<div><label>Description of Goods</label><input id="goods"></div>
+<div><label>Actual Weight (Kg)</label><input id="weight" type="number" min="0" step=".01"></div>
+<div><label>Charged Weight (Kg)</label><input id="charged" type="number" min="0" step=".01"></div>
+<div><label>Basic Freight ₹</label><input id="freight" type="number" min="0" value="0" oninput="calc()"></div>
+<div><label>Loading Charge ₹</label><input id="loading" type="number" min="0" value="0" oninput="calc()"></div>
+<div><label>Unloading Charge ₹</label><input id="unloading" type="number" min="0" value="0" oninput="calc()"></div>
+<div><label>Door Collection ₹</label><input id="collection" type="number" min="0" value="0" oninput="calc()"></div>
+<div><label>Door Delivery ₹</label><input id="delivery" type="number" min="0" value="0" oninput="calc()"></div>
+<div><label>Goods Value ₹</label><input id="value" type="number" min="0" value="0"></div>
+<div><label>Type of Delivery</label><select id="dtype"><option>OFFICE</option><option>DOOR</option></select></div>
+<div><label>Payment</label><select id="payment"><option>PAID</option><option>TO PAY</option></select></div>
+</div>
+<div class="total">Total ₹ <span id="total">0</span></div>
+<div class="row">
+<button class="btn primary" onclick="saveLR()">Save LR</button>
+<button class="btn secondary" onclick="printLR()">Print / Save PDF</button>
+<button class="btn light" onclick="shareWA()">WhatsApp</button>
+<button class="btn light" onclick="newLR()">New</button>
+</div>
+</div>
+<div class="card">
+<h2>Saved LRs</h2><div id="list">No saved LRs.</div>
+</div>
+</div>
+
+<div id="preview">
+<div class="print-sheet">
+<div class="phead">
+<div class="brand"><b>Redfox</b><strong> SPEED PARCEL SERVICE</strong><small>REGISTER CERTIFIED COMPANY</small><small>56, Stanes Road, Near Pushpa Theatre Bus Stop, Tirupur - 641 602</small><small>GSTIN: 33KPDPK1455P1ZG</small></div>
+<div class="meta"><div><b>L.R.No:</b> <span id="p_lr"></span> &nbsp; <b>Date:</b> <span id="p_date"></span></div><div><b>Invoice No:</b> <span id="p_invoice"></span></div><div><b>From:</b> <span id="p_from"></span></div><div><b>To:</b> <span id="p_to"></span></div></div>
+</div>
+<div class="twocol"><div class="box"><b>Consignor's Name & Address:</b><br><span id="p_consignor"></span></div><div class="box"><b>Consignee's Name & Address:</b><br><span id="p_consignee"></span></div></div>
+<table>
+<tr><th>Qty</th><th>Description of Goods (Said to Contain)</th><th>Weight Kg</th><th>Rate / Kg</th><th>Freight ₹</th></tr>
+<tr><td id="p_qty"></td><td id="p_goods"></td><td id="p_weight"></td><td></td><td id="p_freight"></td></tr>
+<tr><td colspan="4">Loading Charge</td><td id="p_loading"></td></tr>
+<tr><td colspan="4">Unloading Charge</td><td id="p_unloading"></td></tr>
+<tr><td colspan="4">Door Collection / Delivery</td><td id="p_door"></td></tr>
+<tr><td colspan="4"><b>Goods Value ₹</b></td><td id="p_value"></td></tr>
+<tr><td colspan="4"><b>TOTAL ₹</b></td><td><b id="p_total"></b></td></tr>
+</table>
+<div class="twocol"><div class="box"><b>Type of Delivery:</b> <span id="p_dtype"></span><br><b>Payment:</b> <span id="p_payment"></span><div class="sig"></div>Consignee Signature & Seal</div><div class="box"><b>For REDFOX SPEED PARCEL SERVICE</b><div class="sig"></div>Authorised Signature</div></div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+function saveParty(type,value){
+ value=(value||'').trim(); if(!value)return;
+ const key=type==='consignor'?'redfox_consignors':'redfox_consignees';
+ let a=JSON.parse(localStorage.getItem(key)||'[]');
+ if(!a.includes(value)){a.unshift(value);if(a.length>200)a=a.slice(0,200);localStorage.setItem(key,JSON.stringify(a));}
+ renderParties();
+}
+function renderParties(){
+ [['consignor','redfox_consignors','consignorList'],['consignee','redfox_consignees','consigneeList']].forEach(([t,k,l])=>{
+  const a=JSON.parse(localStorage.getItem(k)||'[]');
+  const el=$(l); if(el) el.innerHTML=a.map(v=>`<option value="${String(v).replace(/"/g,'&quot;')}"></option>`).join('');
+ });
+}
+function attachPartyAutosave(){
+ ['consignor','consignee'].forEach(t=>{
+  const el=$(t); if(el){el.addEventListener('blur',()=>saveParty(t,el.value));el.addEventListener('change',()=>saveParty(t,el.value));}
+ });
+ renderParties();
+}
+function init(){
+ let n=Number(localStorage.getItem('redfox_lr_no')||2036);
+ $('lr').value=n+1;
+ $('date').value=new Date().toISOString().slice(0,10);
+ renderList(); calc(); attachPartyAutosave();
+}
+function calc(){
+ const ids=['freight','loading','unloading','collection','delivery'];
+ const t=ids.reduce((s,id)=>s+(Number($(id).value)||0),0);
+ $('total').textContent=t.toFixed(2);
+}
+function data(){
+ return {lr:$('lr').value,date:$('date').value,invoice:$('invoice').value,from:$('from').value,to:$('to').value,
+consignor:$('consignor').value,consignee:$('consignee').value,qty:$('qty').value,goods:$('goods').value,
+weight:$('weight').value,charged:$('charged').value,freight:$('freight').value,loading:$('loading').value,
+unloading:$('unloading').value,collection:$('collection').value,delivery:$('delivery').value,value:$('value').value,
+dtype:$('dtype').value,payment:$('payment').value,total:$('total').textContent};
+}
+function saveLR(){
+ const d=data(); let a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]'); a.unshift(d); localStorage.setItem('redfox_lrs',JSON.stringify(a));
+ localStorage.setItem('redfox_lr_no',d.lr); alert('LR '+d.lr+' saved'); renderList();
+}
+function renderList(){
+ const a=JSON.parse(localStorage.getItem('redfox_lrs')||'[]');
+ $('list').innerHTML=a.length?a.slice(0,20).map(x=>`<div style="padding:8px;border-bottom:1px solid #ddd"><b>LR ${x.lr}</b> — ${x.from} → ${x.to} — ₹${x.total}</div>`).join(''):'No saved LRs.';
+}
+function fillPreview(d){
+ Object.keys(d).forEach(k=>{const e=$('p_'+k);if(e)e.textContent=d[k]});
+ $('p_door').textContent=(Number(d.collection)||0)+(Number(d.delivery)||0);
+}
+function printLR(){fillPreview(data());window.print()}
+function shareWA(){
+ const d=data(); const text=`Redfox LR ${d.lr}\\nDate: ${d.date}\\nFrom: ${d.from}\\nTo: ${d.to}\\nConsignor: ${d.consignor}\\nConsignee: ${d.consignee}\\nGoods: ${d.goods}\\nQty: ${d.qty}\\nWeight: ${d.weight} Kg\\nTotal: ₹${d.total}\\nPayment: ${d.payment}`;
+ location.href='https://wa.me/?text='+encodeURIComponent(text);
+}
+function newLR(){
+ const n=Number(localStorage.getItem('redfox_lr_no')||2036)+1; $('lr').value=n;
+ ['invoice','to','consignor','consignee','goods','weight','charged'].forEach(x=>$(x).value='');
+ ['freight','loading','unloading','collection','delivery','value'].forEach(x=>$(x).value=0); calc();
+}
+init();
+</script>
+</body>
+</html>
