@@ -52,11 +52,17 @@ table{width:100%;border-collapse:collapse}td,th{border:1px solid #111;padding:6p
 </div>
 
 <script>
-function login() {
+< function login() {
   const username = document.getElementById("loginUser").value.trim();
   const password = document.getElementById("loginPass").value;
 
   if (username === "admin" && password === "1234") {
+    document.getElementById("loginScreen").style.display = "none";
+  } else {
+    document.getElementById("loginError").textContent =
+      "Invalid username or password";
+  }
+}
     document.getElementById("loginScreen").style.display = "none";
   } else {
     document.getElementById("loginError").textContent =
@@ -74,7 +80,7 @@ function login() {
   }
 }
 </script>
-<header class="no-print"><h1>Redfox Speed Parcel Service</h1><small>No. 17 KNP PURAM, Lingae Gounder Street, Odakkadu, Tirupur - 641602</small><small>GSTIN: 33KPDPK1455P1ZG | PAN: KPDPK1455P</small></header>
+<header class="no-print"><h1>Redfox Speed Parcel Service</h1><small>No. 17 KNP PURAM, Lingae Goundr Street, Odakkadu, Tirupur - 641602</small><small>GSTIN: 33KPDPK1455P1ZG | PAN: KPDPK1455P</small></header>
 
 <div class="container no-print">
 <div class="card">
