@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Redfox Speed Parcel Service - LR App</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#17202a}
+header{background:#b30000;color:#fff;padding:16px;text-align:center}header h1{margin:0;font-size:22px}header small{opacity:.9}
+nav{display:flex;gap:6px;overflow:auto;background:#fff;padding:8px;position:sticky;top:0;z-index:5;box-shadow:0 2px 6px #0001}
+nav button{border:0;background:#eee;padding:10px 12px;border-radius:8px;white-space:nowrap;font-weight:bold}
+nav button.active{background:#b30000;color:white}
+main{max-width:1000px;margin:auto;padding:12px}.card{background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px #0001}
+h2{margin-top:0;color:#b30000}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+label{font-size:13px;font-weight:bold}input,select,textarea{width:100%;padding:11px;border:1px solid #ccd2d8;border-radius:7px;margin-top:5px;font-size:15px}textarea{min-height:70px}
+.btn{border:0;border-radius:8px;padding:11px 15px;font-weight:bold;cursor:pointer;background:#b30000;color:white;margin:4px 2px}.btn.secondary{background:#555}.btn.green{background:#16833a}.btn.orange{background:#e67e00}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{background:#fff;padding:14px;border-radius:10px;text-align:center;box-shadow:0 2px 6px #0001}.stat b{display:block;font-size:22px;color:#b30000}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}th{background:#f1f1f1}
+.hidden{display:none}.search{margin-bottom:10px}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}.login .card{width:100%;max-width:400px;text-align:center}
+.print-area{display:none}
+@media(max-width:650px){.grid,.stats{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}table{min-width:800px}.table-wrap{overflow:auto}}
+@media print{body>*{display:none!important}.print-area{display:block!important;padding:10mm;font-family:Arial}.copy{border:1px solid #000;padding:12px;margin-bottom:12px;page-break-inside:avoid}.copy h2{text-align:center;margin:0 0 5px;color:#000}.copy p{margin:5px 0;font-size:12px}.copies{display:block}}
+</style>
+</head>
+<body>
+
+<div id="login" class="login">
+  <div class="card">
+    <h1 style="color:#b30000">🦊 REDFOX</h1>
+    <h2>Speed Parcel Service</h2>
+    <p>Staff Login</p>
+    <input id="loginUser" placeholder="Username" value="admin">
+    <input id="loginPass" type="password" placeholder="Password" value="1234">
+    <button class="btn" onclick="login()">Login</button>
+    <p style="font-size:12px;color:#777">Default: admin / 1234</p>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+<header>
+  <h1>🦊 REDFOX SPEED PARCEL SERVICE</h1>
+  <small>LR Booking & Tracking • <span id="staffInfo">Staff</span> • <span id="firebaseStatus">☁️ Connecting...</span></small>
+</header>
+
+<nav>
+<button class="active" onclick="show('dashboard',this)">Dashboard</button>
+<button id="newLRNav" onclick="show('booking',this)">New LR</button>
+<button onclick="show('tracking',this)">Tracking</button>
+<button onclick="show('reports',this)">Reports</button>
+<button id="adminNav" onclick="show('users',this)">Users</button><button onclick="show('settings',this)">Settings</button>
+<button onclick="logout()">Logout</button>
+</nav>
+
+<main>
+<section id="dashboard">
+  <div class="stats">
+    <div class="stat">Total LR<b id="sTotal">0</b></div>
+    <div class="stat">Booked<b id="sBooked">0</b></div>
+    <div class="stat">Delivered<b id="sDelivered">0</b></div>
+    <div class="stat">Pending ₹<b id="sPending">0</b></div>
+  </div>
+  <div class="card">
+    <h2>Recent Bookings</h2>
+    <div class="table-wrap"><table><thead><tr><th>LR No</th><th>Date</th><th>Receiver</th><th>To</th><th>Total</th><th>Status</th></tr></thead><tbody id="recent"></tbody></table></div>
+  </div>
+</section>
+
+<section id="booking" class="hidden">
+<div class="card">
+<h2 id="bookingTitle">📦 New LR Booking</h2>
+<div class="grid">
+<div><label>LR Number</label><input id="lrNo" readonly></div>
+<div><label>Date</label><input id="lrDate" type="datetime-local"></div>
+<div><label>Sender Name</label><input id="sender"></div>
+<div><label>Sender Mobile</label><input id="senderMobile" type="tel"></div>
+<div><label>Receiver Name</label><input id="receiver"></div>
+<div><label>Receiver Mobile</label><input id="receiverMobile" type="tel"></div>
+<div><label>From</label><input id="from"></div>
+<div><label>To</label><input id="to"></div>
+<div><label>Parcel / Description</label><input id="parcel"></div>
+<div><label>Weight (Kg)</label><input id="weight" type="number" step="0.01"></div>
+<div><label>Freight ₹</label><input id="freight" type="number" value="0"></div>
+<div><label>Other Charges ₹</label><input id="other" type="number" value="0"></div>
+<div><label>Payment</label><select id="payment"><option>Paid</option><option>Pending</option></select></div>
+<div><label>Status</label><select id="status"><option>Booked</option><option>In Transit</option><option>Delivered</option></select></div>
+</div>
+<label>Remarks</label><textarea id="remarks"></textarea>
+<h3>Total: ₹<span id="total">0</span></h3>
+<button class="btn green" onclick="saveLR()">Save LR</button>
+<button class="btn orange" onclick="printCurrent()">Save & 3-Copy Print</button>
+<button class="btn secondary" onclick="clearForm()">Clear</button>
+</div>
+</section>
+
+<section id="tracking" class="hidden">
+<div class="card">
+<h2>🔎 LR Tracking</h2>
+<input class="search" id="trackSearch" placeholder="Enter LR Number / receiver / mobile" oninput="renderTracking()">
+<div class="table-wrap"><table><thead><tr><th>LR</th><th>Date</th><th>Sender</th><th>Receiver</th><th>Route</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody id="trackingRows"></tbody></table></div>
+</div>
+</section>
+
+<section id="reports" class="hidden">
+<div class="card">
+<h2>📊 Reports</h2>
+<div class="grid">
+<div><label>From</label><input id="rFrom" type="date"></div>
+<div><label>To</label><input id="rTo" type="date"></div>
+</div>
+<button class="btn" onclick="renderReports()">Generate</button>
+<button class="btn green" onclick="exportCSV()">Export CSV</button>
+<div id="reportBox"></div>
+</div>
+</section>
+
+
+<section id="users" class="hidden">
+<div class="card">
+<h2>👥 User Management</h2>
+<p style="color:#666">Admin can create, edit and remove staff accounts. This starter version stores users in this browser; online shared login/database will be connected in the next deployment step.</p>
+<div class="grid">
+<div><label>Username</label><input id="uName" placeholder="staff01"></div>
+<div><label>Password</label><input id="uPass" type="password" placeholder="Password"></div>
+<div><label>Name</label><input id="uFull" placeholder="Staff name"></div>
+<div><label>Role</label><select id="uRole"><option>Staff</option><option>Admin</option></select></div>
+</div>
+<button class="btn green" onclick="addUser()">Add User</button>
+<div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Action</th></tr></thead><tbody id="usersRows"></tbody></table></div>
+</div>
+</section>
+
+<section id="settings" class="hidden">
+<div class="card">
+<h2>⚙️ Settings</h2>
+<p>Change staff password</p>
+<input id="newPass" type="password" placeholder="New password">
+<button class="btn" onclick="changePassword()">Change Password</button>
+<hr>
+<button class="btn green" onclick="backup()">Backup Data</button>
+<label class="btn secondary" style="display:inline-block">Restore Data<input type="file" accept=".json" onchange="restore(event)" style="display:none"></label>
+<button class="btn orange" onclick="clearAll()">Delete All Data</button>
+</div>
+</section>
+</main>
+</div>
+
+<div class="print-area" id="printArea"></div>
+
+<script>
+const firebaseConfig={apiKey:"AIzaSyAETCJuS-hBn0_L0WQrxiIaL09gLC6zFs8",projectId:"redfox-speed-parcel-serv-800bb"};
+const API=firebaseConfig.apiKey, PROJECT=firebaseConfig.projectId;
+const FSBASE=`https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
+const KEY='redfox_lr_data_v2';
+let data=JSON.parse(localStorage.getItem(KEY)||'[]');
+let pass=localStorage.getItem('redfox_pass')||'1234';
+let users=JSON.parse(localStorage.getItem('redfox_users')||'null')||[{username:'admin',password:pass,name:'Administrator',role:'Admin'}];
+let loggedUser=null,firebaseUser=null,unsubscribeBookings=null,firebaseReady=false,firebaseToken=null,firebaseRefresh=null;
+const $ = id => document.getElementById(id);
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function toast(msg,ok=true){alert(msg)}
+function localSave(){localStorage.setItem(KEY,JSON.stringify(data));}
+function nextLR(){let max=0;data.forEach(x=>{let n=parseInt(String(x.lrNo||'').replace(/\D/g,''),10);if(n>max)max=n});return 'RFX'+String(max+1).padStart(5,'0');}
+function nowLocal(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
+function fsValue(v){if(v===null||v===undefined)return {nullValue:null};if(typeof v==='boolean')return {booleanValue:v};if(typeof v==='number')return {doubleValue:v};return {stringValue:String(v)}}
+function fsFields(obj){const out={};for(const[k,v]of Object.entries(obj))out[k]=fsValue(v);return out}
+function fromFsValue(v){if('stringValue'in v)return v.stringValue;if('integerValue'in v)return Number(v.integerValue);if('doubleValue'in v)return Number(v.doubleValue);if('booleanValue'in v)return v.booleanValue;if('timestampValue'in v)return v.timestampValue;if('nullValue'in v)return null;return ''}
+function fromFsDoc(d){const x={id:(d.name||'').split('/').pop()};for(const[k,v]of Object.entries(d.fields||{}))x[k]=fromFsValue(v);return x}
+async function authRequest(url,body){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json();if(!r.ok)throw new Error(j.error?.message||'Authentication failed');return j}
+async function connectFirebase(){try{const saved=JSON.parse(localStorage.getItem('redfox_fb_auth')||'null');let j=null;if(saved?.refreshToken){try{j=await authRequest(`https://securetoken.googleapis.com/v1/token?key=${API}`,{grant_type:'refresh_token',refresh_token:saved.refreshToken});firebaseToken=j.id_token;firebaseRefresh=j.refresh_token}catch(e){j=null}}if(!j){j=await authRequest(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API}`,{returnSecureToken:true});firebaseToken=j.idToken;firebaseRefresh=j.refreshToken}localStorage.setItem('redfox_fb_auth',JSON.stringify({refreshToken:firebaseRefresh||j.refreshToken}));firebaseUser={uid:j.localId||j.user_id};firebaseReady=true;$('firebaseStatus').textContent='☁️ Firebase Connected';$('firebaseStatus').style.color='#16833a';await loadBookings()}catch(err){console.error(err);firebaseReady=false;$('firebaseStatus').textContent='⚠️ Firebase connection failed';$('firebaseStatus').style.color='#b00020';}}
+async function apiFetch(url,opts={}){const r=await fetch(url,{...opts,headers:{...(opts.headers||{}),Authorization:`Bearer ${firebaseToken}`,'Content-Type':'application/json'}});if(r.status===401){firebaseToken=null;await connectFirebase();return apiFetch(url,opts)}const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error?.message||`HTTP ${r.status}`);return j}
+async function loadBookings(){const j=await apiFetch(`${FSBASE}/lr_bookings?pageSize=300`);data=(j.documents||[]).map(fromFsDoc);localSave();renderDashboard();renderTracking();renderReports();if($('lrNo')&&!currentEditLR)$('lrNo').value=nextLR()}
+function subscribeBookings(){loadBookings().catch(e=>{console.error(e);$('firebaseStatus').textContent='⚠️ Firestore read error';$('firebaseStatus').style.color='#b00020'})}
+async function writeLR(x){if(!firebaseReady||!firebaseToken){localSave();return {localOnly:true}}const clean={...x,updatedAt:new Date().toISOString()};await apiFetch(`${FSBASE}/lr_bookings/${encodeURIComponent(x.lrNo)}`,{method:'PATCH',body:JSON.stringify({fields:fsFields(clean)})});const i=data.findIndex(y=>y.lrNo===x.lrNo);if(i>=0)data[i]=clean;else data.push(clean);localSave();return {localOnly:false}}
+async function removeLR(id){if(firebaseReady&&firebaseToken)await apiFetch(`${FSBASE}/lr_bookings/${encodeURIComponent(id)}`,{method:'DELETE'});data=data.filter(x=>x.lrNo!==id);localSave()}
+function login(){
+  const un=$('loginUser').value.trim();
+  const pw=$('loginPass').value;
+  const u=users.find(x=>x.username===un && x.password===pw);
+  if(u){
+    loggedUser=u;
+    $('login').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    $('staffInfo').textContent=u.name+' • '+u.role;
+    $('adminNav').style.display=u.role==='Admin'?'inline-block':'none';
+    init();
+  }else alert('Invalid username or password');
+}
+function logout(){ location.reload(); }
+
+let currentLR=null;
+let currentEditLR=false;
+
+function init(){
+  $('lrNo').value=nextLR();
+  $('lrDate').value=nowLocal();
+  ['freight','other'].forEach(id=>$(id).addEventListener('input',calc));
+  calc();
+  renderDashboard(); renderTracking(); renderUsers();
+}
+
+function calc(){
+  const a=+$('freight').value||0, b=+$('other').value||0;
+  $('total').textContent=(a+b).toFixed(2);
+}
+
+function getForm(){
+  return {
+    lrNo:$('lrNo').value.trim(),
+    date:$('lrDate').value,
+    sender:$('sender').value.trim(),
+    senderMobile:$('senderMobile').value.trim(),
+    receiver:$('receiver').value.trim(),
+    receiverMobile:$('receiverMobile').value.trim(),
+    from:$('from').value.trim(),
+    to:$('to').value.trim(),
+    parcel:$('parcel').value.trim(),
+    weight:$('weight').value,
+    freight:+$('freight').value||0,
+    other:+$('other').value||0,
+    total:(+$('freight').value||0)+(+$('other').value||0),
+    payment:$('payment').value,
+    status:$('status').value,
+    remarks:$('remarks').value.trim()
+  };
+}
+
+async function saveLR(){
+  const x=getForm();
+  if(!x.sender||!x.receiver||!x.from||!x.to){
+    alert('Please fill Sender, Receiver, From and To');
+    return;
+  }
+  try{
+    await writeLR(x);
+    currentLR=x;
+    currentEditLR=false;
+    toast(firebaseReady ? 'LR saved to Firebase: '+x.lrNo : 'LR saved locally. Firebase is not connected.');
+    clearForm();
+    renderDashboard(); renderTracking(); renderReports();
+  }catch(err){
+    console.error(err);
+    alert('Could not save to Firebase.\n\n'+err.message);
+  }
+}
+
+function clearForm(){
+  ['sender','senderMobile','receiver','receiverMobile','from','to','parcel','weight','remarks']
+    .forEach(id=>$(id).value='');
+  $('freight').value=0;
+  $('other').value=0;
+  $('payment').value='Paid';
+  $('status').value='Booked';
+  $('lrNo').value=nextLR();
+  $('lrDate').value=nowLocal();
+  $('bookingTitle').textContent='📦 New LR Booking';
+  currentEditLR=false;
+  calc();
+}
+
+function editLR(id){
+  const x=data.find(a=>a.lrNo===id);
+  if(!x)return;
+  show('booking',$('newLRNav'));
+  currentEditLR=true;
+  $('bookingTitle').textContent='✏️ Edit LR '+x.lrNo;
+  Object.keys(x).forEach(k=>{
+    const e=$(k);
+    if(e && k!=='updatedAt' && k!=='id') e.value=x[k] ?? '';
+  });
+  calc();
+}
+
+async function deleteLR(id){
+  if(!confirm('Delete '+id+'?')) return;
+  try{
+    await removeLR(id);
+    data=data.filter(x=>x.lrNo!==id);
+    localSave();
+    renderDashboard(); renderTracking(); renderReports();
+  }catch(err){
+    console.error(err);
+    alert('Delete failed.\n\n'+err.message);
+  }
+}
+
+function printLR(x){
+  if(!x)return;
+  const row=title=>`<div class="copy">
+    <h2>REDFOX SPEED PARCEL SERVICE</h2>
+    <p style="text-align:center"><b>${esc(title)}</b></p>
+    <hr>
+    <p><b>LR No:</b> ${esc(x.lrNo)} &nbsp; <b>Date:</b> ${esc(x.date)}</p>
+    <p><b>Sender:</b> ${esc(x.sender)} (${esc(x.senderMobile||'-')})</p>
+    <p><b>Receiver:</b> ${esc(x.receiver)} (${esc(x.receiverMobile||'-')})</p>
+    <p><b>Route:</b> ${esc(x.from)} → ${esc(x.to)}</p>
+    <p><b>Parcel:</b> ${esc(x.parcel||'-')} &nbsp; <b>Weight:</b> ${esc(x.weight||'-')} Kg</p>
+    <p><b>Freight:</b> ₹${Number(x.freight||0).toFixed(2)} &nbsp;
+       <b>Other:</b> ₹${Number(x.other||0).toFixed(2)} &nbsp;
+       <b>Total:</b> ₹${Number(x.total||0).toFixed(2)}</p>
+    <p><b>Payment:</b> ${esc(x.payment)} &nbsp; <b>Status:</b> ${esc(x.status)}</p>
+    <p>Remarks: ${esc(x.remarks||'-')}</p>
+    <br><p>Receiver Signature: ____________________</p>
+  </div>`;
+  $('printArea').innerHTML=row('OFFICE COPY')+row('CUSTOMER COPY')+row('DESTINATION COPY');
+  window.print();
+}
+
+async function printCurrent(){
+  const x=getForm();
+  if(!x.sender||!x.receiver){
+    alert('Please fill booking details first');
+    return;
+  }
+  try{
+    await writeLR(x);
+    currentLR=x;
+    printLR(x);
+    renderDashboard(); renderTracking();
+  }catch(err){
+    alert('Could not save before printing.\n\n'+err.message);
+  }
+}
+
+function renderDashboard(){
+  $('sTotal').textContent=data.length;
+  $('sBooked').textContent=data.filter(x=>x.status==='Booked').length;
+  $('sDelivered').textContent=data.filter(x=>x.status==='Delivered').length;
+  $('sPending').textContent=data.filter(x=>x.payment==='Pending').reduce((a,x)=>a+Number(x.total||0),0).toFixed(2);
+
+  $('recent').innerHTML=data.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,10)
+    .map(x=>`<tr><td>${esc(x.lrNo)}</td><td>${esc(String(x.date||'').replace('T',' '))}</td>
+    <td>${esc(x.receiver)}</td><td>${esc(x.to)}</td><td>₹${Number(x.total||0).toFixed(2)}</td><td>${esc(x.status)}</td></tr>`)
+    .join('') || '<tr><td colspan="6">No bookings</td></tr>';
+}
+
+function renderTracking(){
+  if(!$('trackingRows'))return;
+  const q=($('trackSearch')?.value||'').toLowerCase();
+  const arr=data.filter(x=>Object.values(x).join(' ').toLowerCase().includes(q));
+  $('trackingRows').innerHTML=arr.slice().reverse().map(x=>`<tr>
+    <td>${esc(x.lrNo)}</td><td>${esc(String(x.date||'').replace('T',' '))}</td>
+    <td>${esc(x.sender)}</td><td>${esc(x.receiver)}</td>
+    <td>${esc(x.from)} → ${esc(x.to)}</td><td>₹${Number(x.total||0).toFixed(2)}</td>
+    <td><select onchange="setStatus('${esc(x.lrNo)}',this.value)">
+      <option ${x.status==='Booked'?'selected':''}>Booked</option>
+      <option ${x.status==='In Transit'?'selected':''}>In Transit</option>
+      <option ${x.status==='Delivered'?'selected':''}>Delivered</option>
+    </select></td>
+    <td><button class="btn" onclick="printLR(data.find(a=>a.lrNo==='${esc(x.lrNo)}'))">Print</button>
+    <button class="btn secondary" onclick="editLR('${esc(x.lrNo)}')">Edit</button>
+    <button class="btn orange" onclick="deleteLR('${esc(x.lrNo)}')">Delete</button></td>
+  </tr>`).join('') || '<tr><td colspan="8">No matching LR</td></tr>';
+}
+
+async function setStatus(id,s){
+  const x=data.find(a=>a.lrNo===id);
+  if(!x)return;
+  x.status=s;
+  try{
+    await writeLR(x);
+    renderDashboard(); renderTracking();
+  }catch(err){ alert('Status update failed.\n\n'+err.message); }
+}
+
+function renderReports(){
+  const f=$('rFrom').value,t=$('rTo').value;
+  const arr=data.filter(x=>{
+    const d=String(x.date||'').slice(0,10);
+    return(!f||d>=f)&&(!t||d<=t);
+  });
+  const rev=arr.reduce((a,x)=>a+Number(x.total||0),0);
+  const paid=arr.filter(x=>x.payment==='Paid').reduce((a,x)=>a+Number(x.total||0),0);
+  const pending=arr.filter(x=>x.payment==='Pending').reduce((a,x)=>a+Number(x.total||0),0);
+  $('reportBox').innerHTML=`<div class="stats">
+    <div class="stat">LR<b>${arr.length}</b></div>
+    <div class="stat">Revenue<b>₹${rev.toFixed(2)}</b></div>
+    <div class="stat">Paid<b>₹${paid.toFixed(2)}</b></div>
+    <div class="stat">Pending<b>₹${pending.toFixed(2)}</b></div>
+  </div><br><div class="table-wrap"><table>
+  <tr><th>LR</th><th>Date</th><th>Route</th><th>Total</th><th>Payment</th></tr>
+  ${arr.slice().reverse().map(x=>`<tr><td>${esc(x.lrNo)}</td><td>${esc(String(x.date||'').slice(0,10))}</td>
+  <td>${esc(x.from)} → ${esc(x.to)}</td><td>₹${Number(x.total||0).toFixed(2)}</td><td>${esc(x.payment)}</td></tr>`).join('')}
+  </table></div>`;
+}
+
+function exportCSV(){
+  const rows=[['LR No','Date','Sender','Sender Mobile','Receiver','Receiver Mobile','From','To','Parcel','Weight','Freight','Other','Total','Payment','Status','Remarks'],
+    ...data.map(x=>[x.lrNo,x.date,x.sender,x.senderMobile,x.receiver,x.receiverMobile,x.from,x.to,x.parcel,x.weight,x.freight,x.other,x.total,x.payment,x.status,x.remarks])];
+  const csv=rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='redfox-lr-bookings.csv'; a.click();
+}
+
+function backup(){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  a.download='redfox-firebase-backup.json'; a.click();
+}
+
+function restore(e){
+  const file=e.target.files[0]; if(!file)return;
+  const r=new FileReader();
+  r.onload=async()=>{
+    try{
+      const arr=JSON.parse(r.result);
+      if(!Array.isArray(arr))throw new Error('Invalid backup');
+      for(const x of arr){
+        if(x.lrNo) await writeLR(x);
+      }
+      alert('Backup restored to Firebase.');
+    }catch(err){alert('Restore failed: '+err.message);}
+  };
+  r.readAsText(file);
+}
+
+function changePassword(){
+  const p=$('newPass').value;
+  if(p.length<4){alert('Password must be at least 4 characters');return;}
+  pass=p; localStorage.setItem('redfox_pass',p);
+  const admin=users.find(x=>x.username==='admin');
+  if(admin) admin.password=p;
+  saveUsers();
+  $('newPass').value='';
+  alert('Password changed');
+}
+
+async function clearAll(){
+  if(!confirm('Delete ALL LR data from Firebase?'))return;
+  try{
+    if(firebaseReady&&firebaseToken){const j=await apiFetch(`${FSBASE}/lr_bookings?pageSize=300`);for(const d of(j.documents||[]))await apiFetch(`${FSBASE}/${d.name.split('/documents/')[1]}`,{method:'DELETE'});}
+    data=[];localSave();renderDashboard();renderTracking();renderReports();
+  }catch(err){alert('Delete failed: '+err.message)}
+}
+
+function saveUsers(){localStorage.setItem('redfox_users',JSON.stringify(users));}
+function addUser(){
+  if(!loggedUser || loggedUser.role!=='Admin'){alert('Admin only');return;}
+  const username=$('uName').value.trim(), password=$('uPass').value, name=$('uFull').value.trim(), role=$('uRole').value;
+  if(!username||!password||!name){alert('Fill username, password and name');return;}
+  if(users.some(x=>x.username===username)){alert('Username already exists');return;}
+  users.push({username,password,name,role});saveUsers();
+  $('uName').value='';$('uPass').value='';$('uFull').value='';$('uRole').value='Staff';
+  renderUsers();alert('User added');
+}
+function deleteUser(username){
+  if(!loggedUser || loggedUser.role!=='Admin'){alert('Admin only');return;}
+  if(username==='admin'){alert('Default admin cannot be deleted');return;}
+  if(confirm('Delete '+username+'?')){
+    users=users.filter(x=>x.username!==username);saveUsers();renderUsers();
+  }
+}
+function renderUsers(){
+  const box=$('usersRows'); if(!box)return;
+  box.innerHTML=users.map(x=>`<tr><td>${esc(x.username)}</td><td>${esc(x.name)}</td><td>${esc(x.role)}</td>
+  <td>${x.username==='admin'?'Protected':`<button class="btn orange" onclick="deleteUser('${esc(x.username)}')">Delete</button>`}</td></tr>`).join('');
+}
+
+function show(id,btn){
+  document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
+  $(id).classList.remove('hidden');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  if(id==='dashboard')renderDashboard();
+  if(id==='tracking')renderTracking();
+  if(id==='reports')renderReports();
+  if(id==='users' && (!loggedUser || loggedUser.role!=='Admin')){
+    alert('Admin only');show('dashboard',document.querySelector('nav button'));
+  }
+}
+
+window.login=login; window.logout=logout; window.show=show; window.saveLR=saveLR;
+window.clearForm=clearForm; window.editLR=editLR; window.deleteLR=deleteLR;
+window.printLR=printLR; window.printCurrent=printCurrent; window.renderTracking=renderTracking;
+window.setStatus=setStatus; window.renderReports=renderReports; window.exportCSV=exportCSV;
+window.backup=backup; window.restore=restore; window.changePassword=changePassword;
+window.clearAll=clearAll; window.addUser=addUser; window.deleteUser=deleteUser;
+
+$('firebaseStatus').textContent='☁️ Connecting to Firebase...';
+connectFirebase();
+</script>
+</body>
+</html>
